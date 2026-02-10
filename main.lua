@@ -1,35 +1,43 @@
--- [[ AUTOMATIC REGION BYPASS ]] --
-local TextChatService = game:GetService("TextChatService")
-local StarterGui = game:GetService("StarterGui")
+-- [[ EMERGENCY OVERRIDE UI ]] --
+local player = game.Players.LocalPlayer
+local pgui = player:WaitForChild("PlayerGui")
 
--- 1. FORCE THE UI TO APPEAR
-local function forceUI()
-    -- This overrides the "Disabled" state from your region
-    TextChatService.ChatInputBarConfiguration.Enabled = true
-    TextChatService.ChatWindowConfiguration.Enabled = true
-    
-    -- Force the bar to link to the main channel
-    local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-    TextChatService.ChatInputBarConfiguration.TargetTextChannel = channel
+-- 1. KILL ANY OLD VERSIONS
+if pgui:FindFirstChild("EmergencyBypass") then
+    pgui.EmergencyBypass:Destroy()
 end
 
--- 2. CREATE A "BACKUP" BUTTON
--- If the official bar still won't show, this puts a button on your screen
-local screenGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
-local btn = Instance.new("TextButton", screenGui)
-btn.Size = UDim2.new(0, 200, 0, 50)
-btn.Position = UDim2.new(0.5, -100, 0, 50)
-btn.Text = "Chat Status: Attempting Bypass..."
-btn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+-- 2. CREATE A BRIGHT RED OVERLAY (To prove it's running)
+local sg = Instance.new("ScreenGui")
+sg.Name = "EmergencyBypass"
+sg.ResetOnSpawn = false
+sg.DisplayOrder = 999 -- Keeps it on top of everything
+sg.Parent = pgui
 
--- 3. MONITOR MESSAGES
-TextChatService.OnIncomingMessage = function(message)
-    if message.TextSource then
-        print("[MONITOR]: " .. message.TextSource.Name .. ": " .. message.Text)
-        btn.Text = "Last Msg: " .. message.Text
-    end
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 100)
+frame.Position = UDim2.new(0.5, -150, 0, 20)
+frame.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+frame.BorderSizePixel = 4
+frame.Parent = sg
+
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 1, 0)
+label.Text = "EXECUTOR ACTIVE\nREGION: KUWAIT DETECTED\nAttempting Chat Unlock..."
+label.TextColor3 = Color3.new(1, 1, 1)
+label.BackgroundTransparency = 1
+label.TextScaled = true
+label.Parent = frame
+
+-- 3. BRUTE FORCE THE CHAT SERVICE
+local TCS = game:GetService("TextChatService")
+local s, e = pcall(function()
+    TCS.ChatInputBarConfiguration.Enabled = true
+    TCS.ChatWindowConfiguration.Enabled = true
+    label.Text = "CHAT UNLOCKED!\nTry clicking the top-left\nchat icon now."
+    frame.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+end)
+
+if not s then
+    label.Text = "ERROR: " .. tostring(e)
 end
-
-task.spawn(forceUI)
-btn.Text = "Bypass Active - Check Chat Bar"
-btn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
