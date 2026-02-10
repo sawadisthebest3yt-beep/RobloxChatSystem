@@ -1,41 +1,35 @@
--- [[ 2026 REGION BYPASS & CHAT SYSTEM ]] --
+-- [[ AUTOMATIC REGION BYPASS ]] --
 local TextChatService = game:GetService("TextChatService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local StarterGui = game:GetService("StarterGui")
 
--- 1. FORCE THE UI (Bypass the "Not Available" lock)
-local function forceEnable()
-    -- Enable the modern TextChatService bars
+-- 1. FORCE THE UI TO APPEAR
+local function forceUI()
+    -- This overrides the "Disabled" state from your region
     TextChatService.ChatInputBarConfiguration.Enabled = true
     TextChatService.ChatWindowConfiguration.Enabled = true
     
-    -- Some games require a direct target channel to show the bar
-    local generalChannel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
-    TextChatService.ChatInputBarConfiguration.TargetTextChannel = generalChannel
-    
-    print("UI Force-Enabled for " .. LocalPlayer.Name)
+    -- Force the bar to link to the main channel
+    local channel = TextChatService:WaitForChild("TextChannels"):WaitForChild("RBXGeneral")
+    TextChatService.ChatInputBarConfiguration.TargetTextChannel = channel
 end
 
--- 2. THE CHAT MONITOR (See messages in banned regions)
-local function setupMonitor()
-    TextChatService.OnIncomingMessage = function(message)
-        -- This logic still runs even if the UI is hidden for others
-        if message.TextSource then
-            local sender = message.TextSource.Name
-            local text = message.Text
-            print("[GLOBAL MONITOR]: " .. sender .. ": " .. text)
-            -- You can insert this into your custom UI frame here
-        end
+-- 2. CREATE A "BACKUP" BUTTON
+-- If the official bar still won't show, this puts a button on your screen
+local screenGui = Instance.new("ScreenGui", game.Players.LocalPlayer:WaitForChild("PlayerGui"))
+local btn = Instance.new("TextButton", screenGui)
+btn.Size = UDim2.new(0, 200, 0, 50)
+btn.Position = UDim2.new(0.5, -100, 0, 50)
+btn.Text = "Chat Status: Attempting Bypass..."
+btn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+
+-- 3. MONITOR MESSAGES
+TextChatService.OnIncomingMessage = function(message)
+    if message.TextSource then
+        print("[MONITOR]: " .. message.TextSource.Name .. ": " .. message.Text)
+        btn.Text = "Last Msg: " .. message.Text
     end
 end
 
--- 3. EXECUTION
-task.spawn(forceEnable)
-task.spawn(setupMonitor)
-
--- Notification to confirm it worked
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "Chat Unlocked",
-    Text = "Region bypass active. Check your chat bar!",
-    Duration = 5
-})
+task.spawn(forceUI)
+btn.Text = "Bypass Active - Check Chat Bar"
+btn.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
